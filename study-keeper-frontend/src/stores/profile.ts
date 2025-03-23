@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import axios from 'axios';
 
 export interface UserProfile {
   id: number;
@@ -28,6 +29,11 @@ interface ProfileState {
   error: string | null;
 }
 
+interface PasswordUpdate {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const useProfileStore = defineStore('profile', {
   state: (): ProfileState => ({
     profile: null,
@@ -44,27 +50,8 @@ export const useProfileStore = defineStore('profile', {
       this.loading = true;
       this.error = null;
       try {
-        // TODO: API 호출로 대체
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        this.profile = {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          name: '테스트 사용자',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          settings: {
-            theme: 'system',
-            language: 'ko',
-            timezone: 'Asia/Seoul',
-            notifications: {
-              email: true,
-              push: true,
-              studyReminder: true,
-              testReminder: true
-            }
-          }
-        };
+        const response = await axios.get('/api/profile');
+        this.profile = response.data;
       } catch (error) {
         this.error = '프로필을 불러오는데 실패했습니다.';
         throw error;
@@ -73,19 +60,12 @@ export const useProfileStore = defineStore('profile', {
       }
     },
 
-    async updateProfile(data: Partial<UserProfile>) {
+    async updateProfile(profileData: Partial<UserProfile>) {
       this.loading = true;
       this.error = null;
       try {
-        // TODO: API 호출로 대체
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        if (this.profile) {
-          this.profile = {
-            ...this.profile,
-            ...data,
-            updatedAt: new Date().toISOString()
-          };
-        }
+        const response = await axios.put('/api/profile', profileData);
+        this.profile = response.data;
       } catch (error) {
         this.error = '프로필 업데이트에 실패했습니다.';
         throw error;
@@ -119,10 +99,17 @@ export const useProfileStore = defineStore('profile', {
       this.loading = true;
       this.error = null;
       try {
-        // TODO: API 호출로 대체
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await axios.post('/api/profile/avatar', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
         if (this.profile) {
-          this.profile.avatar = URL.createObjectURL(file);
+          this.profile.avatar = response.data.avatarUrl;
           this.profile.updatedAt = new Date().toISOString();
         }
       } catch (error) {
@@ -146,6 +133,25 @@ export const useProfileStore = defineStore('profile', {
       } finally {
         this.loading = false;
       }
-    }
+    },
+
+    async updatePassword(passwordData: PasswordUpdate) {
+      this.loading = true;
+      try {
+        await axios.put('/api/profile/password', passwordData);
+      } catch (error: any) {
+        // 서버에서 특정 에러 메시지를 보내는 경우 처리
+        if (error.response?.data?.message) {
+          this.error = error.response.data.message;
+        } else if (error.response?.status === 401) {
+          this.error = '현재 비밀번호가 일치하지 않습니다.';
+        } else {
+          this.error = '비밀번호 변경에 실패했습니다.';
+        }
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
   }
 }); 

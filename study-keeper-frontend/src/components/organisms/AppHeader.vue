@@ -8,12 +8,15 @@
     <v-spacer></v-spacer>
     
     
-    <v-btn icon @click="navigateHome">
+    <v-btn v-if="!hideHomeButton" icon @click="navigateHome">
+      <v-tooltip activator="parent" location="bottom">
+        <span>Home</span>
+      </v-tooltip>
       <v-icon>mdi-home</v-icon>
     </v-btn>
     <v-menu>
-      <template v-slot:activator>
-        <v-btn icon>
+      <template v-slot:activator="{ props }">
+        <v-btn icon v-bind="props">
           <v-icon>mdi-account-circle</v-icon>
         </v-btn>
       </template>
@@ -35,6 +38,10 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+
+const props = defineProps<{
+  hideHomeButton?: boolean;
+}>();
 
 const router = useRouter();
 

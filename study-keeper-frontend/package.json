@@ -4,12 +4,22 @@
   "type": "module",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev:local": "vite --mode localhost",
+    "dev:dev": "vite --mode development",
+    "dev:prod": "vite --mode production",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "vitest",
+    "test:e2e": "cypress open",
+    "format": "prettier --write .",
+    "prepare": "husky install",
+    "analyze": "vite build --analyze",
+    "clean": "rimraf dist",
+    "serve": "vite preview --port 8080",
+    "generate-docs": "typedoc"
   },
   "dependencies": {
     "@mdi/font": "7.4.47",

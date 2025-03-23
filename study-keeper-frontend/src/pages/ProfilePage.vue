@@ -70,6 +70,20 @@
             </v-row>
           </v-card-text>
         </v-card>
+
+        <v-card class="mt-4">
+          <v-card-title>보안</v-card-title>
+          <v-card-text>
+            <v-btn
+              color="primary"
+              variant="outlined"
+              @click="showPasswordDialog = true"
+            >
+              <v-icon start>mdi-lock</v-icon>
+              비밀번호 변경
+            </v-btn>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
 
@@ -125,6 +139,67 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 비밀번호 변경 다이얼로그 -->
+    <v-dialog v-model="showPasswordDialog" max-width="500px">
+      <v-card>
+        <v-card-title>비밀번호 변경</v-card-title>
+        <v-card-text>
+          <v-form ref="passwordForm" v-model="isPasswordFormValid">
+            <v-text-field
+              v-model="passwordData.currentPassword"
+              label="현재 비밀번호"
+              type="password"
+              :rules="[v => !!v || '현재 비밀번호를 입력해주세요']"
+              required
+            />
+
+            <v-text-field
+              v-model="passwordData.newPassword"
+              label="새 비밀번호"
+              type="password"
+              :rules="[
+                v => !!v || '새 비밀번호를 입력해주세요',
+                v => v.length >= 8 || '비밀번호는 8자 이상이어야 합니다',
+                v => /[A-Z]/.test(v) || '대문자를 포함해야 합니다',
+                v => /[0-9]/.test(v) || '숫자를 포함해야 합니다',
+                v => /[!@#$%^&*]/.test(v) || '특수문자를 포함해야 합니다'
+              ]"
+              required
+            />
+
+            <v-text-field
+              v-model="passwordData.confirmPassword"
+              label="새 비밀번호 확인"
+              type="password"
+              :rules="[
+                v => !!v || '새 비밀번호를 다시 입력해주세요',
+                v => v === passwordData.newPassword || '비밀번호가 일치하지 않습니다'
+              ]"
+              required
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="grey"
+            variant="text"
+            @click="showPasswordDialog = false"
+          >
+            취소
+          </v-btn>
+          <v-btn
+            color="primary"
+            :loading="passwordLoading"
+            :disabled="!isPasswordFormValid"
+            @click="handlePasswordChange"
+          >
+            변경
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -139,6 +214,17 @@ const isFormValid = ref(false);
 const loading = ref(false);
 const avatarFile = ref<File | null>(null);
 const form = ref();
+
+const showPasswordDialog = ref(false);
+const isPasswordFormValid = ref(false);
+const passwordLoading = ref(false);
+const passwordForm = ref();
+
+const passwordData = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
 
 const profile = computed(() => profileStore.profile);
 
@@ -188,6 +274,33 @@ const handleSubmit = async () => {
     console.error('Failed to update profile:', error);
   } finally {
     loading.value = false;
+  }
+};
+
+const handlePasswordChange = async () => {
+  if (!passwordForm.value.validate()) return;
+
+  passwordLoading.value = true;
+  try {
+    await profileStore.updatePassword({
+      currentPassword: passwordData.value.currentPassword,
+      newPassword: passwordData.value.newPassword
+    });
+    
+    showPasswordDialog.value = false;
+    passwordData.value = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+    
+    // 성공 메시지
+    alert('비밀번호가 성공적으로 변경되었습니다.');
+  } catch (error: any) {
+    // 스토어에서 설정된 에러 메시지 사용
+    alert(profileStore.error || '비밀번호 변경에 실패했습니다.');
+  } finally {
+    passwordLoading.value = false;
   }
 };
 

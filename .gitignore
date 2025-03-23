@@ -95,3 +95,12 @@ dist/
 
 # Temp files
 temp/
+
+# Image files for screen designs
+/화면_img/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
